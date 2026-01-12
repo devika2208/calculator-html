@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mobile Calculator</title>
+<title>Enhanced Mobile Calculator</title>
 
 <style>
     body {
@@ -32,8 +32,16 @@
         background: #555;
         border-radius: 12px;
         border: none;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         box-sizing: border-box;
+    }
+
+    .history {
+        color: #aaa;
+        font-size: 14px;
+        min-height: 50px;
+        margin-bottom: 10px;
+        overflow-y: auto;
     }
 
     .buttons {
@@ -50,31 +58,17 @@
         cursor: pointer;
     }
 
-    .number {
-        background: #3a3a3a;
-        color: white;
-    }
-
-    .operator {
-        background: orange;
-        color: white;
-    }
-
-    .special {
-        background: #777;
-        color: white;
-    }
-
-    .clear {
-        background: red;
-        color: white;
-    }
+    .number { background: #3a3a3a; color: white; }
+    .operator { background: orange; color: white; }
+    .special { background: #777; color: white; }
+    .clear { background: red; color: white; }
 </style>
 </head>
 <body>
 
 <div class="calculator">
     <input type="text" id="display" class="display" disabled>
+    <div class="history" id="history"></div>
 
     <div class="buttons">
         <!-- First Row -->
@@ -110,27 +104,57 @@
 </div>
 
 <script>
-    function append(value) {
-        document.getElementById("display").value += value;
-    }
+let historyList = [];
 
-    function calculate() {
-        try {
-            document.getElementById("display").value =
-                eval(document.getElementById("display").value);
-        } catch {
-            document.getElementById("display").value = "Error";
-        }
+function append(value) {
+    const display = document.getElementById("display");
+    if(value === '()') {
+        // smart parentheses: add () if none, else close
+        let open = (display.value.match(/\(/g) || []).length;
+        let close = (display.value.match(/\)/g) || []).length;
+        display.value += open <= close ? '(' : ')';
+    } else {
+        display.value += value;
     }
+}
 
-    function clearDisplay() {
-        document.getElementById("display").value = "";
+function calculate() {
+    const display = document.getElementById("display");
+    try {
+        let result = eval(display.value);
+        result = parseFloat(result.toFixed(10)); // limit decimals
+        historyList.push(`${display.value} = ${result}`);
+        if(historyList.length > 5) historyList.shift();
+        updateHistory();
+        display.value = result;
+    } catch {
+        display.value = "Error";
     }
+}
 
-    function backspace() {
-        let display = document.getElementById("display");
-        display.value = display.value.slice(0, -1);
-    }
+function clearDisplay() {
+    document.getElementById("display").value = "";
+}
+
+function backspace() {
+    const display = document.getElementById("display");
+    display.value = display.value.slice(0, -1);
+}
+
+function updateHistory() {
+    const historyDiv = document.getElementById("history");
+    historyDiv.innerHTML = historyList.join('<br>');
+}
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+    const keys = '0123456789/*-+.%()';
+    if(keys.includes(e.key)) append(e.key);
+    else if(e.key === 'Enter') calculate();
+    else if(e.key === 'Backspace') backspace();git status
+
+    else if(e.key.toLowerCase() === 'c') clearDisplay();
+});
 </script>
 
 </body>
